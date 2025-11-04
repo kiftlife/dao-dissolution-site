@@ -7,8 +7,6 @@
     "dev:testnet": "cp .env.testnet .env.local && next dev",
     "dev:mainnet": "cp .env.mainnet .env.local && next dev",
     "build": "next build",
-    "build:testnet": "cp .env.testnet .env.local && next build",
-    "build:mainnet": "cp .env.mainnet .env.local && next build",
     "start": "next start",
     "lint": "next lint",
     "update-contracts": "node scripts/update-contracts.js"
