@@ -1,0 +1,150 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 45 65% 91%; /* #f1ebd9 tan background */
+    --foreground: 0 0% 10%; /* #1A1A1A dark text */
+    --card: 45 65% 91%;
+    --card-foreground: 0 0% 10%;
+    --popover: 45 65% 91%;
+    --popover-foreground: 0 0% 10%;
+    --primary: 0 0% 10%; /* #1A1A1A dark primary */
+    --primary-foreground: 0 0% 100%; /* white text on dark */
+    --secondary: 45 35% 85%; /* lighter tan for secondary */
+    --secondary-foreground: 0 0% 10%;
+    --muted: 45 35% 85%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 0 0% 10%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 45 35% 80%;
+    --input: 45 35% 85%;
+    --ring: 0 0% 10%;
+    --radius: 3rem; /* Rounded buttons like original */
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: 0 0% 7%; /* #111111 dark grey background */
+      --foreground: 45 65% 91%; /* #f1ebd9 tan text */
+      --card: 0 0% 10%; /* #1a1a1a dark cards */
+      --card-foreground: 45 65% 91%;
+      --popover: 0 0% 10%;
+      --popover-foreground: 45 65% 91%;
+      --primary: 45 65% 91%; /* #f1ebd9 tan primary */
+      --primary-foreground: 0 0% 10%; /* dark text on tan */
+      --secondary: 0 0% 15%; /* darker grey for secondary */
+      --secondary-foreground: 45 65% 91%;
+      --muted: 0 0% 15%;
+      --muted-foreground: 45 35% 65%;
+      --accent: 45 65% 91%;
+      --accent-foreground: 0 0% 10%;
+      --destructive: 0 84% 60%;
+      --destructive-foreground: 0 0% 100%;
+      --border: 45 35% 50%; /* tan borders */
+      --input: 0 0% 15%;
+      --ring: 45 65% 91%;
+    }
+  }
+
+  html,
+  body {
+    padding: 0;
+    margin: 0;
+    font-family: basic-sans, sans-serif, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
+      Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+    font-size: 16px;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+
+  body {
+    @apply antialiased;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary));
+}
+
+/* Kift Original Styling */
+.kift-button {
+  border-radius: 3rem;
+  padding: 0.9rem 2.5rem;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border: none;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.1s linear;
+}
+
+.kift-button:hover {
+  background: hsl(var(--primary) / 0.9);
+}
+
+.kift-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.kift-button.secondary {
+  border: solid 2px hsl(var(--primary));
+  background: none;
+  color: hsl(var(--primary));
+}
+
+.kift-button.secondary:hover {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+/* RainbowKit custom styling */
+[data-rk] button[data-testid="rk-connect-button"] {
+  background: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  border-radius: 3rem !important;
+  padding: 0.7rem 2.5rem !important;
+  font-weight: bold !important;
+  font-size: 1rem !important;
+  border: none !important;
+  transition: background-color 0.1s linear !important;
+}
+
+[data-rk] button[data-testid="rk-connect-button"]:hover {
+  background: hsl(var(--primary) / 0.9) !important;
+}
+
+[data-rk] button[data-testid="rk-account-button"] {
+  background: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  border-radius: 3rem !important;
+  padding: 0.7rem 2.5rem !important;
+  font-weight: bold !important;
+  font-size: 1rem !important;
+  border: none !important;
+  transition: background-color 0.1s linear !important;
+}
+
+[data-rk] button[data-testid="rk-account-button"]:hover {
+  background: hsl(var(--primary) / 0.9) !important;
+}
