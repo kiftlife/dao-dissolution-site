@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useAccount } from 'wagmi'
-import { alchemy, KIFTABLES_CONTRACT_ADDRESS } from '@/lib/alchemy'
-import { OwnedNft } from 'alchemy-sdk'
+import { CONTRACTS } from '@/lib/contracts'
+import { fetchNFTsForOwner, fetchNFTMetadata } from '@/app/actions/alchemy'
+
+const KIFTABLES_CONTRACT_ADDRESS = CONTRACTS.kiftables
 
 export interface KiftablesNFT {
   tokenId: number
@@ -31,58 +33,43 @@ export function useKiftablesNFTs() {
       setError(null)
 
       try {
-        // Fetch NFTs for the user from the Kiftables contract
-        const response = await alchemy.nft.getNftsForOwner(address, {
-          contractAddresses: [KIFTABLES_CONTRACT_ADDRESS],
-          withMetadata: true,
-          excludeFilters: [], // Don't exclude any NFTs
-          includeFilters: [], // Include all NFTs
-        })
+        // Use server action to fetch NFTs
+        const response = await fetchNFTsForOwner(address, KIFTABLES_CONTRACT_ADDRESS)
 
-        console.log('Alchemy response:', response)
+        console.log('Server action response:', response)
         console.log('Total NFTs found:', response.ownedNfts.length)
 
         // Debug first NFT
         if (response.ownedNfts.length > 0) {
           const firstNft = response.ownedNfts[0]
-          console.log('First NFT raw data:', firstNft)
-          console.log('First NFT metadata:', firstNft.metadata)
-          console.log('First NFT tokenUri:', firstNft.tokenUri)
+          console.log('First NFT data:', firstNft)
         }
 
         // Process NFTs and try to get fresh metadata for each one
         const kiftablesNFTs: KiftablesNFT[] = []
 
         for (const nft of response.ownedNfts) {
-          if (nft.contract.address.toLowerCase() !== KIFTABLES_CONTRACT_ADDRESS.toLowerCase()) {
-            continue
-          }
-
           const tokenId = parseInt(nft.tokenId)
 
           try {
-            // Try to get fresh metadata for each NFT
+            // Try to get fresh metadata for each NFT using server action
             console.log(`Fetching fresh metadata for token #${tokenId}`)
-            const nftMetadata = await alchemy.nft.getNftMetadata(
-              KIFTABLES_CONTRACT_ADDRESS,
-              tokenId,
-              { refreshCache: true }
-            )
+            const nftMetadata = await fetchNFTMetadata(KIFTABLES_CONTRACT_ADDRESS, tokenId.toString())
 
             console.log(`Token #${tokenId} fresh metadata response:`, nftMetadata)
 
             // Extract data from the fresh metadata response
-            let name = nftMetadata.name || nftMetadata.metadata?.name || `Kiftables #${tokenId}`
-            let description = nftMetadata.description || nftMetadata.metadata?.description || ''
+            let name = nftMetadata.name || `Kiftables #${tokenId}`
+            let description = nftMetadata.description || ''
             let image = ''
 
-            // Try multiple image sources from Alchemy response
+            // Try multiple image sources
             if (nftMetadata.image?.originalUrl) {
               image = nftMetadata.image.originalUrl
             } else if (nftMetadata.image?.cachedUrl) {
               image = nftMetadata.image.cachedUrl
-            } else if (nftMetadata.metadata?.image) {
-              image = nftMetadata.metadata.image
+            } else if (typeof nftMetadata.image === 'string') {
+              image = nftMetadata.image
             } else if (nftMetadata.raw?.metadata?.image) {
               image = nftMetadata.raw.metadata.image
             }
@@ -109,13 +96,24 @@ export function useKiftablesNFTs() {
           } catch (metadataError) {
             console.log(`Failed to get metadata for token #${tokenId}:`, metadataError)
 
-            // Fallback to basic data
+            // Fallback to basic data from initial response
+            const name = nft.name || `Kiftables #${tokenId}`
+            const description = nft.description || ''
+            let image = nft.image || ''
+
+            if (image && image.includes('ipfs://')) {
+              const imageId = image.replace('ipfs://', '')
+              image = `https://cloudflare-ipfs.com/ipfs/${imageId}`
+            }
+
+            const revealed = !!(name && description && image)
+
             kiftablesNFTs.push({
               tokenId,
-              name: `Kiftables #${tokenId}`,
-              description: '',
-              image: '',
-              revealed: false,
+              name,
+              description,
+              image,
+              revealed,
             })
           }
         }
@@ -140,26 +138,21 @@ export function useKiftablesNFTs() {
       setError(null)
 
       try {
-        const response = await alchemy.nft.getNftsForOwner(address, {
-          contractAddresses: [KIFTABLES_CONTRACT_ADDRESS],
-          withMetadata: true,
-        })
+        const response = await fetchNFTsForOwner(address, KIFTABLES_CONTRACT_ADDRESS)
 
         const kiftablesNFTs: KiftablesNFT[] = response.ownedNfts
-          .filter((nft: OwnedNft) => nft.contract.address.toLowerCase() === KIFTABLES_CONTRACT_ADDRESS.toLowerCase())
-          .map((nft: OwnedNft) => {
+          .map((nft: any) => {
             const tokenId = parseInt(nft.tokenId)
-            const metadata = nft.metadata
-            let name = metadata?.name || `Kiftables #${tokenId}`
-            let description = metadata?.description || ''
-            let image = metadata?.image || ''
+            const name = nft.name || `Kiftables #${tokenId}`
+            const description = nft.description || ''
+            let image = nft.image || ''
 
             if (image && image.includes('ipfs://')) {
               const imageId = image.replace('ipfs://', '')
               image = `https://cloudflare-ipfs.com/ipfs/${imageId}`
             }
 
-            const revealed = !!(metadata?.name && metadata?.description && metadata?.image)
+            const revealed = !!(name && description && image)
 
             return {
               tokenId,
@@ -169,7 +162,7 @@ export function useKiftablesNFTs() {
               revealed,
             }
           })
-          .sort((a, b) => a.tokenId - b.tokenId)
+          .sort((a: KiftablesNFT, b: KiftablesNFT) => a.tokenId - b.tokenId)
 
         setNfts(kiftablesNFTs)
       } catch (err) {
