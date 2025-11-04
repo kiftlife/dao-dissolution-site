@@ -36,7 +36,7 @@ export function SimpleNFTGrid() {
   }
 
   // Get NFTs for this wallet
-  const walletNFTs = WALLET_NFTS[address.toLowerCase() as keyof typeof WALLET_NFTS] || []
+  const walletNFTs: readonly number[] = WALLET_NFTS[address.toLowerCase() as keyof typeof WALLET_NFTS] || []
 
   // Get user's registered token IDs from the contract
   const { data: userRegisteredTokenIds } = useReadContract({
@@ -60,7 +60,7 @@ export function SimpleNFTGrid() {
     if (userRegisteredTokenIds) {
       userRegisteredTokenIds.forEach((tokenId: bigint) => {
         const id = Number(tokenId)
-        if (walletNFTs.includes(id)) {
+        if ((walletNFTs as readonly number[]).includes(id)) {
           statusMap.set(id, true)
         }
       })
