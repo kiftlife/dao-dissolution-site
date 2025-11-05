@@ -5,6 +5,7 @@ import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit'
 import { WagmiProvider } from 'wagmi'
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
 import { config } from '@/lib/wagmi'
+import { TransactionProvider } from '@/contexts/TransactionContext'
 
 const queryClient = new QueryClient()
 
@@ -19,7 +20,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
             borderRadius: 'medium',
           })}
         >
-          {children}
+          <TransactionProvider>
+            {children}
+          </TransactionProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

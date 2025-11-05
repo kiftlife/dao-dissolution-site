@@ -1,18 +1,20 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAccount, useReadContract } from 'wagmi'
+import { useAccount, useReadContract, useWatchContractEvent } from 'wagmi'
 import { RegisterButton } from './RegisterButton'
 import { CONTRACTS, DISSOLUTION_ABI } from '@/lib/contracts'
 import { CheckCircle, Clock, Sparkles, Loader2, XCircle } from 'lucide-react'
 import { useKiftablesNFTs } from '@/hooks/useKiftablesNFTs'
 import { IPFSImage } from './IPFSImage'
 import { toast } from 'sonner'
+import { useTransactionContext } from '@/contexts/TransactionContext'
 
 export function NFTGrid() {
   const { address, isConnected } = useAccount()
   const [selectedTokenIds, setSelectedTokenIds] = useState<Set<number>>(new Set())
   const [registrationStatus, setRegistrationStatus] = useState<Map<number, boolean>>(new Map())
+  const { isPendingToken } = useTransactionContext()
 
   console.log('NFTGrid: isConnected:', isConnected, 'address:', address)
 
@@ -34,12 +36,29 @@ export function NFTGrid() {
   }
 
   // Get user's registered token IDs from the dissolution contract
-  const { data: userRegisteredTokenIds } = useReadContract({
+  const { data: userRegisteredTokenIds, refetch: refetchRegisteredTokens } = useReadContract({
     address: CONTRACTS.dissolution as `0x${string}`,
     abi: DISSOLUTION_ABI,
     functionName: 'getUserTokenIds',
     args: address ? [address] : undefined,
     query: { enabled: !!address },
+  })
+
+  // Watch for NFTsRegistered events to auto-refresh
+  useWatchContractEvent({
+    address: CONTRACTS.dissolution as `0x${string}`,
+    abi: DISSOLUTION_ABI,
+    eventName: 'NFTsRegistered',
+    onLogs(logs) {
+      const userLogs = logs.filter((log: any) =>
+        log.args?.user?.toLowerCase() === address?.toLowerCase()
+      )
+      if (userLogs.length > 0) {
+        console.log('NFTsRegistered event detected, refreshing...')
+        refetchRegisteredTokens()
+        refetch() // Refresh NFTs too
+      }
+    },
   })
 
   // Get redemption info to check if registrations are open
@@ -187,7 +206,9 @@ export function NFTGrid() {
               key={nft.tokenId}
               className={`
                 group relative overflow-hidden rounded-2xl transition-all duration-300 transform
-                ${isRegistered
+                ${isPending
+                  ? 'bg-blue-50 dark:bg-blue-950/20 border-2 border-blue-300 dark:border-blue-700/50 cursor-wait opacity-75 animate-pulse'
+                  : isRegistered
                   ? 'bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-200 dark:border-amber-800/30 cursor-not-allowed'
                   : !isRegistrationOpen
                   ? 'bg-muted/30 border-2 border-muted/50 cursor-pointer opacity-60 hover:opacity-80'
@@ -196,7 +217,7 @@ export function NFTGrid() {
                   : 'bg-card border-2 border-border cursor-pointer hover:border-foreground/30 hover:scale-105 hover:shadow-lg'
                 }
               `}
-              onClick={() => handleTokenSelect(nft.tokenId)}
+              onClick={() => !isPending && handleTokenSelect(nft.tokenId)}
             >
               {/* NFT Image Area */}
               <div className="aspect-square relative overflow-hidden">
@@ -229,6 +250,16 @@ export function NFTGrid() {
                       <div className="text-sm font-medium text-white mt-1">
                         Kiftables
                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Pending Transaction Overlay */}
+                {isPending && !isRegistered && (
+                  <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center backdrop-blur-sm">
+                    <div className="bg-blue-600 text-white px-4 py-2 rounded-full flex items-center gap-2 font-semibold text-sm shadow-lg animate-pulse">
+                      <Loader2 size={16} className="animate-spin" />
+                      PENDING...
                     </div>
                   </div>
                 )}
@@ -304,6 +335,9 @@ export function NFTGrid() {
                   tokenIds={Array.from(selectedTokenIds)}
                   onSuccess={() => {
                     setSelectedTokenIds(new Set())
+                  }}
+                  onRefresh={() => {
+                    refetchRegisteredTokens()
                     refetch()
                   }}
                   disabled={!isRegistrationOpen}
