@@ -56,7 +56,7 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const isPendingToken = useCallback((tokenId: number): boolean => {
-    for (const tx of pendingTransactions.values()) {
+    for (const tx of Array.from(pendingTransactions.values())) {
       if (tx.status === 'pending' && tx.tokenIds.includes(tokenId)) {
         return true
       }
