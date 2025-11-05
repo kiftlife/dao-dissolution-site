@@ -200,6 +200,7 @@ export function NFTGrid() {
         {nfts.map((nft) => {
           const isRegistered = registrationStatus.get(nft.tokenId) || false
           const isSelected = selectedTokenIds.has(nft.tokenId)
+          const isPending = isPendingToken(nft.tokenId)
 
           return (
             <div
